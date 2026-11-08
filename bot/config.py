@@ -6,10 +6,11 @@ from cryptography.fernet import Fernet, InvalidToken
 from dotenv import load_dotenv
 
 
-@dataclass(frozen=True)
+@dataclass
 class Settings:
     bot_token: str
     admin_ids: tuple[int, ...]
+    super_admin_id: int
     admin_usernames: tuple[str, ...]
     hash_salt: str
     fernet_key: str
@@ -17,8 +18,8 @@ class Settings:
     max_hour: int
     max_day: int
     db_path: str
-    max_appeals_per_hour: int = 3
-    max_appeals_per_day: int = 8
+    max_appeals_per_hour: int = 10
+    max_appeals_per_day: int = 30
 
 
 def load_settings() -> Settings:
@@ -59,6 +60,7 @@ def load_settings() -> Settings:
     return Settings(
         bot_token=os.environ["BOT_TOKEN"].strip(),
         admin_ids=admin_ids,
+        super_admin_id=admin_ids[0],
         admin_usernames=admin_usernames,
         hash_salt=os.environ["HASH_SALT"].strip(),
         fernet_key=os.environ["FERNET_KEY"].strip(),

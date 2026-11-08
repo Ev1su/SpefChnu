@@ -5,6 +5,16 @@ from bot.handlers.appeals import format_kyiv_time
 
 
 @pytest.mark.asyncio
+async def test_admin_persistence(tmp_path):
+    db = Database(str(tmp_path / "admins.db"))
+    await db.connect()
+    await db.sync_initial_admins((1, 2))
+    assert await db.add_admin(3, 1) is True
+    assert await db.add_admin(3, 1) is False
+    assert await db.list_admins() == (1, 2, 3)
+    await db.close()
+
+
 async def test_create_status_notes_cleanup(tmp_path):
     db = Database(str(tmp_path / "bot.db"))
     await db.connect()

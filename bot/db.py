@@ -9,6 +9,11 @@ SCHEMA = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS admins (
+    admin_id INTEGER PRIMARY KEY,
+    added_by INTEGER NOT NULL,
+    created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS appeals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_hash TEXT NOT NULL,
@@ -124,6 +129,31 @@ class Database:
     @staticmethod
     def now() -> str:
         return datetime.now(UTC).isoformat(timespec="seconds")
+
+    async def sync_initial_admins(self, admin_ids: tuple[int, ...]) -> None:
+        async with self.lock:
+            for admin_id in admin_ids:
+                await self.conn.execute(
+                    "INSERT OR IGNORE INTO admins(admin_id,added_by,created_at) VALUES(?,?,?)",
+                    (admin_id, admin_id, self.now()),
+                )
+            await self.conn.commit()
+
+    async def add_admin(self, admin_id: int, added_by: int) -> bool:
+        if admin_id <= 0:
+            return False
+        async with self.lock:
+            cur = await self.conn.execute(
+                "INSERT OR IGNORE INTO admins(admin_id,added_by,created_at) VALUES(?,?,?)",
+                (admin_id, added_by, self.now()),
+            )
+            await self.conn.commit()
+            return cur.rowcount == 1
+
+    async def list_admins(self) -> tuple[int, ...]:
+        async with self.lock:
+            cur = await self.conn.execute("SELECT admin_id FROM admins ORDER BY admin_id")
+            return tuple(int(row[0]) for row in await cur.fetchall())
 
     async def execute(self, sql: str, params: tuple = ()) -> None:
         async with self.lock:

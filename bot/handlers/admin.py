@@ -4,13 +4,14 @@ import re
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import BotCommandScopeChat, CallbackQuery, Message
 
 from bot.callbacks import AdminCardCB, AdminListCB
 from bot.db import Database
 from bot.filters import IsAdmin, IsPrivate
 from bot.handlers.appeals import appeal_card
 from bot.handlers.join import join_card
+from bot.handlers.start import ADMIN_COMMANDS
 from bot.keyboards import (
     admin_list_keyboard,
     appeal_admin_keyboard,
@@ -19,6 +20,28 @@ from bot.keyboards import (
 from bot.services.crypto import CryptoService
 
 router = Router(name="admin")
+
+
+@router.message(Command("addadmin"), IsPrivate())
+async def add_admin(message: Message, db: Database, settings, bot):
+    if message.from_user.id != settings.super_admin_id:
+        await message.answer("⛔ Команда доступна лише головному адміністратору.")
+        return
+
+    parts = message.text.strip().split(maxsplit=1)
+    if len(parts) != 2 or not re.fullmatch(r"[1-9]\d{5,15}", parts[1].strip()):
+        await message.answer("Використання: <code>/addadmin 123456789</code>\nДізнатися ID можна в боті через /myid.")
+        return
+
+    new_admin_id = int(parts[1].strip())
+    if not await db.add_admin(new_admin_id, message.from_user.id):
+        await message.answer("ℹ️ Цей користувач уже є адміністратором.")
+        return
+
+    settings.admin_ids = await db.list_admins()
+    await bot.set_my_commands([], BotCommandScopeChat(chat_id=new_admin_id))
+    await bot.set_my_commands(ADMIN_COMMANDS, BotCommandScopeChat(chat_id=new_admin_id))
+    await message.answer(f"✅ Користувача <code>{new_admin_id}</code> додано як адміністратора.")
 
 
 @router.message(F.text.in_({"📋 Звернення", "📋 Анкети", "📊 Статистика"}), IsPrivate(), IsAdmin())

@@ -17,6 +17,7 @@ PUBLIC_COMMANDS = [
 ]
 ADMIN_COMMANDS = PUBLIC_COMMANDS + [
     BotCommand(command="note", description="Додати внутрішню нотатку"),
+    BotCommand(command="addadmin", description="Додати адміністратора за Telegram ID"),
 ]
 
 

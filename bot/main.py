@@ -63,6 +63,10 @@ async def main() -> None:
     settings = load_settings()
     db = Database(settings.db_path)
     await db.connect()
+    await db.sync_initial_admins(settings.admin_ids)
+    settings.admin_ids = await db.list_admins()
+    if settings.super_admin_id not in settings.admin_ids:
+        settings.admin_ids = (settings.super_admin_id,) + settings.admin_ids
     crypto = CryptoService(settings.fernet_key, settings.hash_salt)
     bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode="HTML"))
     dp = build_dispatcher(settings, db, crypto)
