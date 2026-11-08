@@ -18,6 +18,7 @@ class Settings:
     max_hour: int
     max_day: int
     db_path: str
+    database_url: str | None = None
     max_appeals_per_hour: int = 10
     max_appeals_per_day: int = 30
 
@@ -65,11 +66,15 @@ def load_settings() -> Settings:
         hash_salt=os.environ["HASH_SALT"].strip(),
         fernet_key=os.environ["FERNET_KEY"].strip(),
         retention_days=positive_int("RETENTION_DAYS", 30),
-        max_hour=positive_int("MAX_APPEALS_PER_HOUR", 3),
-        max_day=positive_int("MAX_APPEALS_PER_DAY", 8),
-        max_appeals_per_hour=positive_int("MAX_APPEALS_PER_HOUR", 3),
-        max_appeals_per_day=positive_int("MAX_APPEALS_PER_DAY", 8),
+        max_hour=positive_int("MAX_APPEALS_PER_HOUR", 10),
+        max_day=positive_int("MAX_APPEALS_PER_DAY", 30),
+        max_appeals_per_hour=positive_int("MAX_APPEALS_PER_HOUR", 10),
+        max_appeals_per_day=positive_int("MAX_APPEALS_PER_DAY", 30),
         db_path=os.getenv("DB_PATH", "data/bot.db").strip(),
+        database_url=(
+            os.getenv("DATABASE_URL", "").strip().replace("postgres://", "postgresql://", 1)
+            or None
+        ),
     )
 
 

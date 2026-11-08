@@ -1,6 +1,6 @@
 import pytest
 
-from bot.db import Database
+from bot.db import Database, normalize_database_url
 from bot.handlers.appeals import format_kyiv_time
 
 
@@ -14,7 +14,8 @@ async def test_admin_persistence(tmp_path):
     assert await db.list_admins() == (1, 2, 3)
     await db.close()
 
-
+
+@pytest.mark.asyncio
 async def test_create_status_notes_cleanup(tmp_path):
     db = Database(str(tmp_path / "bot.db"))
     await db.connect()
@@ -92,6 +93,17 @@ async def test_atomic_appeal_limits_and_responsible(tmp_path):
 
     assert await db.set_join_status(1, "review", "Іван Адмін") is False
     await db.close()
+
+
+def test_postgresql_url_backend_selection_without_connection():
+    sqlite_db = Database("data/fallback.db", None)
+    assert sqlite_db.backend == "sqlite"
+    assert sqlite_db.database_url is None
+
+    postgres_db = Database("data/fallback.db", "postgres://user:pass@host/db")
+    assert postgres_db.backend == "postgresql"
+    assert postgres_db.database_url == "postgresql+asyncpg://user:pass@host/db"
+    assert normalize_database_url("postgresql://user:pass@host/db") == "postgresql+asyncpg://user:pass@host/db"
 
 
 @pytest.mark.asyncio

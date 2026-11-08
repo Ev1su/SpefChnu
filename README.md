@@ -29,6 +29,12 @@ pip install -r requirements.txt -r requirements-dev.txt
 python -m bot.main
 ```
 
+## Railway / PostgreSQL
+
+У Railway PostgreSQL підключається через змінну `DATABASE_URL` (Railway може задавати URL у форматі `postgres://...`; бот автоматично переведе його на async драйвер `postgresql+asyncpg://...`). Збережіть `DATABASE_URL` як змінну сервісу бота і не додавайте секрет у репозиторій.
+
+Якщо `DATABASE_URL` не задана або порожня, бот продовжує працювати з SQLite за `DB_PATH` (за замовчуванням `data/bot.db`). Для PostgreSQL локальний `DB_PATH` не є сховищем даних, але все одно може залишитися.
+
 ## Docker
 
 ```bash

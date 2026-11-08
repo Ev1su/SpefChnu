@@ -61,7 +61,7 @@ def build_dispatcher(settings=None, db=None, crypto=None) -> Dispatcher:
 
 async def main() -> None:
     settings = load_settings()
-    db = Database(settings.db_path)
+    db = Database(settings.db_path, settings.database_url)
     await db.connect()
     await db.sync_initial_admins(settings.admin_ids)
     settings.admin_ids = await db.list_admins()
