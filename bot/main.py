@@ -4,7 +4,6 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
-from aiogram.exceptions import TelegramForbiddenError
 from aiogram.types import (
     BotCommandScopeChat,
     BotCommandScopeDefault,
@@ -25,7 +24,10 @@ from bot.middlewares import ThrottleMiddleware
 from bot.services.cleanup import cleanup_job
 from bot.services.crypto import CryptoService
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logging.getLogger("aiogram.event").setLevel(logging.WARNING)
+logging.getLogger("aiogram.dispatcher").setLevel(logging.WARNING)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__) 
 
 
@@ -86,11 +88,6 @@ async def main() -> None:
 
     scheduler.add_job(retry_delivery, "interval", hours=1)
     scheduler.start()
-
-    try:
-        await bot.send_message(settings.admin_ids[0], "🟢 Бот запущено")
-    except TelegramForbiddenError as exc:
-        logger.warning("Суперадмін недоступний під час запуску: %s", type(exc).__name__)
 
     await bot.delete_webhook(drop_pending_updates=True)
     try:
